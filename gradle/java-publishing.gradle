@@ -1,0 +1,96 @@
+assert plugins.hasPlugin(JavaPlugin)
+
+if (project.hasProperty('disableShipkit')) {
+  return
+}
+
+apply plugin: 'maven-publish'
+
+////////////////////////////////////////////////
+// Artifact setup
+////////////////////////////////////////////////
+
+tasks.withType(Jar) {
+  from "$rootDir/LICENSE"
+  from "$rootDir/NOTICE"
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+  classifier = 'sources'
+  from sourceSets.main.allSource
+}
+
+javadoc {
+  // TODO Don't generate javadoc for some PDL Java files for now. https://github.com/linkedin/rest.li/issues/432
+  exclude 'com/linkedin/metadata/query/**'
+
+  // We don't care about missing warnings; we're fine with no @return or missing @param if they don't add value.
+  options.addStringOption('Xdoclint:all,-missing', '-quiet')
+  options.addStringOption('Xwerror', '-quiet')
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+  classifier = 'javadoc'
+  from javadoc.destinationDir
+}
+
+artifacts {
+  archives sourcesJar
+  archives javadocJar
+
+  if (plugins.hasPlugin('pegasus')) {
+    archives mainDataTemplateJar
+  }
+}
+
+def pomConfig = {
+  licenses {
+    license {
+      name = 'The Apache License, Version 2.0'
+      url = 'https://github.com/linkedin/datahub/blob/master/LICENSE'
+      distribution = 'repo'
+    }
+  }
+  scm {
+    url = 'https://github.com/linkedin/datahub.git'
+  }
+  issueManagement {
+    url = 'https://github.com/linkedin/datahub/issues'
+    system = 'GitHub issues'
+  }
+}
+
+publishing {
+  repositories {
+    maven {
+      name = "GitHubPackages"
+      url = uri("https://maven.pkg.github.com/keremsahin/datahub")
+      credentials {
+        username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USER")
+        password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+      }
+    }
+  }
+  publications {
+    if (!project.ext.has('publications') || project.ext.publications.contains('jar')) {
+      jar(MavenPublication) {
+        from components.java
+
+        artifact javadocJar
+        artifact sourcesJar
+
+        pom pomConfig
+      }
+    }
+
+    if (plugins.hasPlugin('pegasus') &&
+        (!project.ext.has('publications') || project.ext.publications.contains('dataTemplate'))) {
+      dataTemplate(MavenPublication) {
+        artifact mainDataTemplateJar
+        artifactId "$project.name-data-template"
+
+        pom pomConfig
+      }
+    }
+  }
+}

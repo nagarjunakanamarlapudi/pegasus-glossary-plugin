@@ -1,0 +1,3 @@
+include 'models-metadata-extractor'
+include 'models'
+include 'repo-mce-plugin'

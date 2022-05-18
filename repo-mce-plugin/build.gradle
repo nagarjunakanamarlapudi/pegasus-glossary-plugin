@@ -1,0 +1,23 @@
+apply plugin: 'java'
+apply plugin: 'java-gradle-plugin'
+apply plugin: 'groovy'
+
+apply from: "$rootDir/gradle/java-publishing.gradle"
+
+dependencies {
+  compile gradleApi()
+  compile project(path: ':models', "configuration": "dataTemplate")
+
+  compile externalDependency.'gradle-tooling-api'
+  compile externalDependency.'gradle-core'
+  compile externalDependency.'jsonSimple'
+  compile spec.product.pegasus.'gradle-plugins'
+  compile spec.product.pegasus.data
+  compile spec.product.pegasus.generator
+  compile externalDependency.'datahub-models'
+  compile externalDependency.'datahub-li-utils'
+  compile externalDependency.'datahub-li-utils-data-template'
+  compile externalDependency.'datahub-events'
+  compile externalDependency.'datahub-events-utils'
+  compile project(':models-metadata-extractor')
+}

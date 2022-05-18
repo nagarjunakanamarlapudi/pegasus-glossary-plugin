@@ -1,0 +1,12 @@
+namespace com.linkedin.schemaannotation
+
+/**
+ * Glossary Structure used in schema annotations
+ */
+record GlossaryStructure {
+
+  /**
+   * glossarty Term used in schema annotations
+   */
+  glossaryTerm: string
+}

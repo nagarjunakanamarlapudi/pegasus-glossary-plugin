@@ -1,0 +1,10 @@
+apply plugin: 'pegasus'
+apply from: "$rootDir/gradle/java-publishing.gradle"
+
+dependencies {
+  compile spec.product.pegasus.data
+}
+
+mainAvroSchemaJar.dependsOn generateAvroSchema
+
+pegasus.main.generationModes = [PegasusGenerationMode.PEGASUS, PegasusGenerationMode.AVRO]
