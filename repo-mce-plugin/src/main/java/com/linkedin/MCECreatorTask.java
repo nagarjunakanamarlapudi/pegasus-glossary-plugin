@@ -1,16 +1,14 @@
 package com.linkedin;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import javax.annotation.Nonnull;
+import org.apache.commons.io.FileUtils;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 
 public class MCECreatorTask extends DefaultTask {
@@ -44,20 +42,23 @@ public class MCECreatorTask extends DefaultTask {
   }
 
   private static void writeToJson(List<String> output, String fileLocation) {
-    //Creating a JSONObject object
-    JSONObject jsonObject = new JSONObject();
-    //Inserting key-value pairs into the json object
-    JSONArray jsonArray = new JSONArray();
-    output.stream().forEach(event -> jsonArray.add(event));
-    try {
-      FileWriter file = new FileWriter(fileLocation);
-      file.write(jsonArray.toJSONString());
-      file.close();
-    } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+
+    StringBuffer stringBuffer = new StringBuffer().append("[").append("\n");
+    for (int i = 0; i < output.size(); i++) {
+      if (i == 0) {
+        stringBuffer.append(output.get(i)).append("\n");
+      } else {
+        stringBuffer.append(",").append(output.get(i)).append("\n");
+      }
     }
-    System.out.println("JSON file created: " + jsonObject);
+    stringBuffer.append("\n").append("]");
+
+    try {
+      FileUtils.writeStringToFile(new File(fileLocation), stringBuffer.toString());
+    } catch (IOException ex) {
+      // Handle exception
+    }
+    System.out.println("JSON file created: " + stringBuffer.toString());
   }
 
   @OutputDirectory
