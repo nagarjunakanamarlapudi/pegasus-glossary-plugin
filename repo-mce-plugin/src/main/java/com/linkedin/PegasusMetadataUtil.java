@@ -82,6 +82,7 @@ public class PegasusMetadataUtil {
   public static List<String> getMCEs(@Nonnull final File modelsLocation, @Nonnull final FileCollection resolverPath)
       throws IOException {
     return parseSchemas(modelsLocation, resolverPath).stream()
+        .filter(schemaInfo -> schemaInfo._namedDataSchema.getProperties().containsKey("dataset"))
         .map(PegasusMetadataUtil::createSchemaMCE)
         .collect(Collectors.toList());
   }
@@ -90,7 +91,6 @@ public class PegasusMetadataUtil {
   private static String createSchemaMCE(@Nonnull SchemaInfo schemaInfo) {
     System.out.println("class path of plugin ... " + System.getProperties().get("java.class.path"));
     System.out.println("properties ... " + schemaInfo._namedDataSchema.getProperties());
-//    DatasetUrn datasetUrn = new DatasetUrn(new DataPlatformUrn("foo_platform"), "foo_name", FabricType.CORP);
     DatasetUrn datasetUrn = null;
     try {
       datasetUrn = DatasetUrn.deserialize(schemaInfo._namedDataSchema.getProperties().get("dataset").toString());
@@ -123,10 +123,11 @@ public class PegasusMetadataUtil {
             schemaInfo._namedDataSchema.getFullName());
         continue;
       }
-      for (final GlossaryStructure glossaryStructure : entry.getValue().get()) {
-        final SchemaField schemaField = convertToSchemaField(entry.getKey(), glossaryStructure);
-        schemaFields.add(schemaField);
-      }
+      final SchemaField schemaField = convertToSchemaField(entry.getKey(), entry.getValue());
+      schemaFields.add(schemaField);
+//      for (final GlossaryStructure glossaryStructure : entry.getValue().get()) {
+//
+//      }
     }
 
     schemaMetadata.setFields(new SchemaFieldArray(schemaFields));
@@ -159,7 +160,8 @@ public class PegasusMetadataUtil {
     return out.toString("UTF-8");
   }
 
-  private static SchemaField convertToSchemaField(String fieldPath, GlossaryStructure glossaryStructure) {
+  private static SchemaField convertToSchemaField(String fieldPath,
+      Optional<List<GlossaryStructure>> glossaryStructures) {
     SchemaField schemaField = new SchemaField();
     schemaField.setFieldPath(fieldPath);
     schemaField.setNullable(false);
@@ -169,12 +171,16 @@ public class PegasusMetadataUtil {
     schemaFieldDataType.setType(type);
     schemaField.setNativeDataType("string");
     schemaField.setType(schemaFieldDataType);
+    GlossaryTermAssociationArray glossaryTermAssociationArray = new GlossaryTermAssociationArray();
 
-    GlossaryTermAssociation glossaryTermAssociation = new GlossaryTermAssociation();
-    glossaryTermAssociation.setUrn(new GlossaryTermUrn(glossaryStructure.getGlossaryTerm()));
+    glossaryStructures.ifPresent(structures -> structures.stream().forEach(glossaryStructure -> {
+      GlossaryTermAssociation glossaryTermAssociation = new GlossaryTermAssociation();
+      glossaryTermAssociation.setUrn(new GlossaryTermUrn(glossaryStructure.getGlossaryTerm()));
+      glossaryTermAssociationArray.add(glossaryTermAssociation);
+    }));
 
     GlossaryTerms glossaryTerms = new GlossaryTerms();
-    glossaryTerms.setTerms(new GlossaryTermAssociationArray(glossaryTermAssociation));
+    glossaryTerms.setTerms(glossaryTermAssociationArray);
     glossaryTerms.setAuditStamp(new AuditStamp().setActor(new CorpuserUrn("naga")).setTime(1L));
 
     schemaField.setGlossaryTerms(glossaryTerms);

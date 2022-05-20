@@ -22,7 +22,6 @@ public class MCECreatorTask extends DefaultTask {
 
   @TaskAction
   public void performTask() throws Exception {
-    System.out.println("in mce creator task");
     _resolverPath = _resolverPath.plus(getProject().files(_inputDir));
     buildMCEEvents(_inputDir, _resolverPath);
   }
@@ -30,14 +29,8 @@ public class MCECreatorTask extends DefaultTask {
   @Nonnull
   public static List<String> buildMCEEvents(@Nonnull final File modelsLocation,
       @Nonnull final FileCollection resolverPath) throws IOException {
-    System.out.println("models location .. " + modelsLocation);
-    System.out.println("resolver path .. " + resolverPath);
     List<String> output = PegasusMetadataUtil.getMCEs(modelsLocation, resolverPath);
-    System.out.println("output ... " + output);
-    System.out.println("output ... " + output.size());
-
     writeToJson(output, "/Users/nkanamar/Desktop/mces.json");
-
     return output;
   }
 
@@ -58,7 +51,6 @@ public class MCECreatorTask extends DefaultTask {
     } catch (IOException ex) {
       // Handle exception
     }
-    System.out.println("JSON file created: " + stringBuffer.toString());
   }
 
   @OutputDirectory

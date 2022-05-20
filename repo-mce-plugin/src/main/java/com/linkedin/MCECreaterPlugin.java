@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 
@@ -17,7 +18,6 @@ public class MCECreaterPlugin implements Plugin<Project> {
 
   @Override
   public void apply(Project project) {
-    System.out.println("12344444");
     Set<SourceSet> sourceSets = getSourceSets(project);
     sourceSets.stream().forEach(sourceSet -> {
       Task generateDataTemplateTask = project.getTasks().findByName(sourceSet.getTaskName("generate", "DataTemplate"));
@@ -26,8 +26,7 @@ public class MCECreaterPlugin implements Plugin<Project> {
       }
       final GenerateDataTemplateTask generateDataTemplatesTask = (GenerateDataTemplateTask) generateDataTemplateTask;
 
-//      MCECreatorTask mceCreatorTask =
-      project.getTasks()
+      MCECreatorTask mceCreatorTask = project.getTasks()
           .create(sourceSet.getTaskName(sourceSet.getName(), GENERATE_SCHEMA_MXE_TASK_NAME), MCECreatorTask.class,
               task -> {
                 task.setDescription(
@@ -37,7 +36,8 @@ public class MCECreaterPlugin implements Plugin<Project> {
                 task.dependsOn(
                     generateDataTemplatesTask); //depending modules need to publish their data-template.jars, before this task can be invoked
               });
-
+      Task buildTask = project.getTasks().findByName("build");
+      buildTask.dependsOn(mceCreatorTask);
 //      project.getArtifacts().add(Dependency.DEFAULT_CONFIGURATION, mceCreatorTask);
     });
   }
